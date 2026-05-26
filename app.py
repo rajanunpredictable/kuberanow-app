@@ -94,16 +94,16 @@ st.markdown("""
 default_memory = {
     "p1_title": "વાર્તાનું મુખ્ય શીર્ષક અહીં જુઓ", 
     "p1_summary": "લિંક સિંક કર્યા પછી ટૂંકો વિગતવાર સારાંશ અહીં જોવા મળશે.",
-    "p2_title": "બીજા પેજનું કન્ટેન્ટ લેયર...", 
-    "p2_summary": "",
-    "p3_title": "ત્રીજા પેજનું કન્ટેન્ટ લેયર...", 
-    "p3_summary": "",
-    "p4_title": "ચોથા પેજનું કન્ટેન્ટ લેયર...", 
-    "p4_summary": "",
-    "p5_title": "પાંચમા પેજનું કન્ટેન્ટ લેયર...", 
-    "p5_summary": "",
-    "p6_title": "છઠ્ઠા પેજનું કન્ટેન્ટ લેયર...", 
-    "p6_summary": "",
+    "p2_title": "પૃષ્ઠભૂમિ અને સંદર્ભ", 
+    "p2_summary": "લિંક સિંક કર્યા પછી પૃષ્ઠભૂમિનો વિગતવાર સારાંશ અહીં દેખાશે.",
+    "p3_title": "મુખ્ય હકીકતો અને વિગતો", 
+    "p3_summary": "લિંક સિંક કર્યા પછી લેખની મુખ્ય હકીકતો અહીં દેખાશે.",
+    "p4_title": "પ્રતિક્રિયાઓ અને અસર", 
+    "p4_summary": "લિંક સિંક કર્યા પછી લોકોની પ્રતિક્રિયાઓ અને અસર અહીં દેખાશે.",
+    "p5_title": "આગળ શું થશે", 
+    "p5_summary": "લિંક સિંક કર્યા પછી ભવિષ્યની યોજનાઓ અહીં દેખાશે.",
+    "p6_title": "નિષ્કર્ષ અને મુખ્ય સંદેશ", 
+    "p6_summary": "લિંક સિંક કર્યા પછી મુખ્ય નિષ્કર્ષ અહીં દેખાશે.",
     "p1_img": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600",
     "p2_img": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600",
     "p3_img": "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600",
@@ -162,11 +162,11 @@ if not st.session_state.get("gemini_api_key"):
 # --- 3. STRUCTURAL DATA CONFIGURATION ---
 cards_map = [
     ("p1", "Page 1: Hook Presentation Cover", True),
-    ("p2", "Page 2: Core Narrative Overview", False),
-    ("p3", "Page 3: Strategic Breakout Segment 1", False),
-    ("p4", "Page 4: Strategic Breakout Segment 2", False),
-    ("p5", "Page 5: Forward Look/Call to Action", False),
-    ("p6", "Page 6: Summary Slate/Outro Frame", False)
+    ("p2", "Page 2: Background & Context", True),
+    ("p3", "Page 3: Key Facts & Details", True),
+    ("p4", "Page 4: Reactions & Impact", True),
+    ("p5", "Page 5: What Happens Next", True),
+    ("p6", "Page 6: Final Takeaway", True)
 ]
 
 # --- 4. HIGH-FIDELITY AUTOMATED CONTENT-AWARE GRAPHICS HOOK ---
@@ -203,70 +203,136 @@ def call_gemini_image_generation(prompt_context):
 def fetch_and_translate_news(url, target_lang):
     has_api_key = bool(st.session_state.get("gemini_api_key", "").strip())
     scraped_text = ""
-    
+
+    # Diagnostic dict captured for the debug expander below the button
+    diag = {
+        "url": url,
+        "has_api_key": has_api_key,
+        "http_status": None,
+        "scraped_chars": 0,
+        "scraped_preview": "",
+        "ai_called": False,
+        "ai_raw_response": "",
+        "ai_keys_parsed": [],
+        "ai_keys_applied": [],
+        "ai_keys_skipped": [],
+        "fallback_used": False,
+        "errors": [],
+    }
+    st.session_state["_last_sync_diag"] = diag
+
     if has_api_key:
         try:
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             response = requests.get(url, timeout=8, headers=headers)
+            diag["http_status"] = response.status_code
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, "html.parser")
                 for script_or_style in soup(["script", "style", "header", "footer", "nav"]):
                     script_or_style.decompose()
                 scraped_text = " ".join(soup.get_text().split())[:5000]
+                diag["scraped_chars"] = len(scraped_text)
+                diag["scraped_preview"] = scraped_text[:600]
+            else:
+                diag["errors"].append(f"HTTP {response.status_code} — URL did not return a readable page. CNBC may be blocking the scraper, or the article URL is invalid/expired.")
         except Exception as scrap_error:
+            diag["errors"].append(f"Scraper exception: {scrap_error}")
             st.sidebar.error(f"Web Scraper Note: Limited access to resource ({scrap_error}). Using direct contextual generation.")
 
     if has_api_key and scraped_text:
         try:
+            diag["ai_called"] = True
             genai.configure(api_key=st.session_state["gemini_api_key"])
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
+
             orchestration_prompt = f"""
-            You are an expert financial and technology content architect. Analyze the provided news text context and generate structured content for a highly compelling 6-page social media carousel layout.
-            
+            You are an expert content architect who can analyze ANY topic — entertainment, sports, politics, business, technology, science, lifestyle, crime, health, or any other domain. Read the news article context below carefully, then design a 6-page Instagram carousel that explains the FULL story to readers who haven't read the article.
+
             TARGET OUTPUT LANGUAGE: {target_lang}
-            
+
             EXTRACTED NEWS CONTEXT:
             {scraped_text}
-            
-            You MUST respond following exactly the key-value schema format below. Do not use markdown blocks like ```json or wrappers around your text. Output plain text lines exactly as shown:
-            P1_TITLE: [Generate a captivating main hook title under 10 words]
-            P1_SUMMARY: [Generate a highly concise 1-sentence summary overview]
-            P2_TITLE: [Generate clear insight point 1]
-            P3_TITLE: [Generate clear insight point 2]
-            P4_TITLE: [Generate clear insight point 3]
-            P5_TITLE: [Generate clear insight point 4]
-            P6_TITLE: [Generate a final powerful conclusion call-to-action]
-            P1_PROMPT: [Corporate futuristic background image generation prompt in English describing this topic]
-            P2_PROMPT: [Corporate graphic background image generation prompt in English]
-            P3_PROMPT: [Corporate graphic background image generation prompt in English]
-            P4_PROMPT: [Corporate graphic background image generation prompt in English]
-            P5_PROMPT: [Corporate graphic background image generation prompt in English]
-            P6_PROMPT: [Corporate graphic background image generation prompt in English]
-            COPY_TITLE: [Catchy main summary title for a text post]
-            COPY_HOOK: [An attention grabbing viral scroll stopper line]
-            COPY_BODY: [A brief, deeply professional analytical summary paragraph of the news]
-            COPY_CAPTION: [A short editorial caption summary]
-            COPY_TAGS: [4 relevant trending hashtags separated by spaces]
+
+            CRITICAL RULES:
+            1. Every page must contain SPECIFIC, ARTICLE-DERIVED information — actual names, places, numbers, dates, quotes, facts from the article. Do NOT write generic statements like "this is important" or "things are changing". Use the specific people and events from the article.
+            2. Spread the article content across all 6 pages so a reader sees the full story by swiping through.
+            3. Image prompts must match the ARTICLE'S ACTUAL TOPIC. If the article is about a Bollywood actor — describe a film set, stage lights, paparazzi cameras, Mumbai cityscape. If it's about a courtroom case — describe judges, gavels, legal documents. If it's about sports — describe stadiums, athletes, scoreboards. NEVER force "corporate" or "financial" imagery onto unrelated topics.
+            4. Output PLAIN TEXT only. Do NOT use markdown (no **bold**, no ```code blocks```, no bullet points). Output exactly the keys shown below, one per line.
+
+            PAGE-BY-PAGE STRUCTURE:
+            P1 = Hook Cover (grabs attention, names the main subject and the big news)
+            P2 = Background/Context (what led up to this — when, where, who)
+            P3 = Key Facts (the most important specific details from the article)
+            P4 = Reactions/Impact (what people are saying, what changes because of this)
+            P5 = What Happens Next (future steps, ongoing developments)
+            P6 = Final Takeaway (the one big conclusion readers should remember)
+
+            REQUIRED OUTPUT FORMAT (one line per key, exactly as shown):
+            P1_TITLE: [Short punchy hook title under 10 words, names the main subject]
+            P1_SUMMARY: [One full sentence summarizing the news, with the central person/event/number]
+            P2_TITLE: [One sentence describing the context/background — specific details, not generic]
+            P2_SUMMARY: [One full sentence expanding on the background with specific facts from the article]
+            P3_TITLE: [One sentence stating a key fact from the article — name, number, date, place]
+            P3_SUMMARY: [One full sentence with more detail on that key fact]
+            P4_TITLE: [One sentence on reactions or impact — quote a person or describe what's changing]
+            P4_SUMMARY: [One full sentence expanding on those reactions with specifics]
+            P5_TITLE: [One sentence about what happens next — upcoming events, next steps, predictions]
+            P5_SUMMARY: [One full sentence with details on the next steps]
+            P6_TITLE: [One sentence final takeaway — the lesson, the warning, the call to action]
+            P6_SUMMARY: [One full sentence wrapping up the story with specific impact]
+            P1_PROMPT: [English image gen prompt that visually matches the ARTICLE TOPIC. Examples by topic — entertainment: red carpet, film cameras, Mumbai night skyline. Sports: stadium lights, athlete silhouette, scoreboard. Politics: parliament building, podium, flags. Technology: server racks, glowing circuits, code on screen. Crime: police lights, courtroom, evidence files. Business: stock chart, office tower, handshake. PICK THE ONE THAT MATCHES THIS ARTICLE.]
+            P2_PROMPT: [Different scene, same topic family — visually representing the background/context aspect]
+            P3_PROMPT: [Different scene, same topic family — visually representing the key facts]
+            P4_PROMPT: [Different scene, same topic family — visually representing reactions/impact]
+            P5_PROMPT: [Different scene, same topic family — visually representing the future/next steps]
+            P6_PROMPT: [Different scene, same topic family — visually representing the conclusion]
+            COPY_TITLE: [Catchy title for an Instagram text post, in English, about this article]
+            COPY_HOOK: [Scroll-stopping hook line in English]
+            COPY_BODY: [2-3 sentence professional summary of the article in English]
+            COPY_CAPTION: [Short editorial Instagram caption in English mentioning the main subject and angle]
+            COPY_TAGS: [15 relevant English hashtags separated by spaces, mixing topic-specific and broad-reach tags, ending with #Kuberanow]
             """
-            
+
             ai_response = model.generate_content(orchestration_prompt).text
-            
-            for line in ai_response.split('\n'):
-                if ': ' in line:
-                    key, value = line.split(': ', 1)
-                    key = key.strip().lower()
-                    value = value.strip()
-                    if key in st.session_state:
-                        st.session_state[key] = value
-            
+            diag["ai_raw_response"] = ai_response[:2000]  # Keep diag size sane
+
+            # --- ROBUST PARSER: handle markdown bold, code fences, and extra whitespace ---
+            cleaned = ai_response.replace("```json", "").replace("```plaintext", "").replace("```text", "").replace("```", "")
+            cleaned = cleaned.replace("**", "").replace("__", "")
+
+            for line in cleaned.split('\n'):
+                line = line.strip()
+                if not line or ':' not in line:
+                    continue
+                key_raw, _, value = line.partition(':')
+                key = key_raw.strip().lstrip("-* ").lower()
+                value = value.strip().strip('"').strip("'").strip("[]").strip()
+                if not value or not key:
+                    continue
+                diag["ai_keys_parsed"].append(key)
+                if key in st.session_state:
+                    st.session_state[key] = value
+                    diag["ai_keys_applied"].append(key)
+                else:
+                    diag["ai_keys_skipped"].append(key)
+
             for p_id in ["p1", "p2", "p3", "p4", "p5", "p6"]:
                 generated_url = call_gemini_image_generation(st.session_state[f"{p_id}_prompt"])
                 if generated_url:
                     st.session_state[f"{p_id}_img"] = generated_url
-            return
+
+            # Only mark success if at least some keys were applied
+            if not diag["ai_keys_applied"]:
+                diag["errors"].append("Gemini response received but ZERO keys were applied — schema mismatch. See raw response below.")
+                diag["fallback_used"] = True
+                # fall through to fallback
+            else:
+                return
         except Exception as ai_err:
+            diag["errors"].append(f"Gemini call failed: {ai_err}")
             st.error(f"Live AI Processing Exception occurred ({ai_err}). Initializing Sandbox Blueprint Layer instead.")
+
+    diag["fallback_used"] = True
 
     # --- SANDBOX COGNITIVE FALLBACK BLOCK ---
     if target_lang == "ગુજરાતી":
@@ -341,7 +407,7 @@ def analyze_competitor_delta_engine(competitor_url, target_lang):
     if has_api_key and scraped_text:
         try:
             genai.configure(api_key=st.session_state["gemini_api_key"])
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             
             delta_orchestration_prompt = f"""
             You are an aggressive corporate intelligence strategist. Analyze the provided competitor content block. 
@@ -680,7 +746,50 @@ with tab1:
         with st.spinner("Executing structural scraping routine and injecting linguistic parameters..."):
             fetch_and_translate_news(url_field, lang_choice)
             st.session_state["session_generations_count"] += 6
-            st.success("Canvas memory, alternative descriptions, and imagery refreshed successfully!")
+            # Mode-aware feedback so users aren't misled in Sandbox Mode
+            if st.session_state.get("gemini_api_key", "").strip():
+                st.success(f"✅ Live AI sync complete — article scraped, content generated, and imagery refreshed for the URL above.")
+            else:
+                st.warning(
+                    "⚠️ **Sandbox Mode active — the URL above was NOT scraped.** "
+                    "The pages below are loaded with demo content. "
+                    "To actually process your URL, paste a free Gemini API key in the sidebar "
+                    "(get one at aistudio.google.com/apikey), then click this button again."
+                )
+
+    # ---------------- DIAGNOSTIC PANEL ----------------
+    # Shows exactly what happened during the last sync — scraped text, AI response,
+    # which keys were applied, which were skipped. If a sync looks like it "did nothing",
+    # open this expander to find out why.
+    if "_last_sync_diag" in st.session_state:
+        diag = st.session_state["_last_sync_diag"]
+        with st.expander("🔍 Last Sync Diagnostics (open this if the pages didn't update)", expanded=False):
+            d_col1, d_col2 = st.columns(2)
+            with d_col1:
+                st.markdown("**Pipeline status**")
+                st.write(f"URL processed: `{diag.get('url', '—')[:90]}`")
+                st.write(f"API key present: `{diag.get('has_api_key')}`")
+                st.write(f"HTTP status: `{diag.get('http_status')}`")
+                st.write(f"Scraped characters: `{diag.get('scraped_chars')}`")
+                st.write(f"AI was called: `{diag.get('ai_called')}`")
+                st.write(f"Fallback used: `{diag.get('fallback_used')}`")
+            with d_col2:
+                st.markdown("**Key application**")
+                st.write(f"Keys parsed from AI: `{len(diag.get('ai_keys_parsed', []))}`")
+                st.write(f"✅ Keys applied: `{len(diag.get('ai_keys_applied', []))}`")
+                st.write(f"⚠️ Keys skipped (not in session_state): `{len(diag.get('ai_keys_skipped', []))}`")
+                if diag.get("ai_keys_skipped"):
+                    st.caption(f"Skipped keys: {', '.join(diag['ai_keys_skipped'][:10])}")
+            if diag.get("errors"):
+                st.markdown("**Errors encountered**")
+                for e in diag["errors"]:
+                    st.error(e)
+            if diag.get("scraped_preview"):
+                st.markdown("**First 600 chars of scraped text** (so you can verify the article was actually fetched)")
+                st.code(diag["scraped_preview"], language=None)
+            if diag.get("ai_raw_response"):
+                st.markdown("**Raw Gemini response** (first 2000 chars)")
+                st.code(diag["ai_raw_response"], language=None)
 
     st.markdown("---")
     st.header("🖼️ Multi-Page Live Visual Canvas Workspace")
