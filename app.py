@@ -138,7 +138,43 @@ default_memory = {
     "copy_hook_B": "🔥 wait... did you see what just happened to the market?!",
     "copy_body_B": "this literal game-changer is turning the regular industry upside down. lock into these wild details right now! 📉🚀",
     "copy_caption_B": "mind = blown. the old legacy players are officially sweating over this one.",
-    "copy_tags_B": "#TechTok #MarketAlpha #ViralVibes #Disruption"
+    "copy_tags_B": "#TechTok #MarketAlpha #ViralVibes #Disruption",
+
+    # ============================================================================
+    # MANUAL STORY COMPOSITION TAB — fully independent state (m_* prefix)
+    # These keys are read/written ONLY by the Manual Story tab. Changes here
+    # never affect the URL tab's content, and vice versa. All defaults are in
+    # English because the live preview in the Manual Story tab renders in English.
+    # ============================================================================
+    "m_p1_title": "Your manual story headline will appear here",
+    "m_p1_summary": "Type a story below and click Generate — Gemini will expand it into a full 6-page carousel.",
+    "m_p2_title": "Background & Context (Page 2)",
+    "m_p2_summary": "After generation, this page will show the background and lead-up to your story.",
+    "m_p3_title": "Key Facts & Details (Page 3)",
+    "m_p3_summary": "After generation, this page will show specific facts, names, and numbers.",
+    "m_p4_title": "Reactions & Impact (Page 4)",
+    "m_p4_summary": "After generation, this page will show how people are reacting and what's changing.",
+    "m_p5_title": "What Happens Next (Page 5)",
+    "m_p5_summary": "After generation, this page will show next steps and future developments.",
+    "m_p6_title": "Final Takeaway (Page 6)",
+    "m_p6_summary": "After generation, this page will show the key conclusion and call to action.",
+    "m_p1_img": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600",
+    "m_p2_img": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600",
+    "m_p3_img": "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600",
+    "m_p4_img": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600",
+    "m_p5_img": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600",
+    "m_p6_img": "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=600",
+    "m_p1_prompt": "Clean minimalist presentation slide cover with abstract dark elements",
+    "m_p2_prompt": "Abstract background image representing context and storyline setting",
+    "m_p3_prompt": "Visual representing factual data and detailed reporting elements",
+    "m_p4_prompt": "Cinematic photo representing public reaction and audience response",
+    "m_p5_prompt": "Forward-looking visual representing upcoming developments and progress",
+    "m_p6_prompt": "Conclusive minimalist photo representing a final takeaway message",
+    "m_copy_title": "Your manual story copywriting title will appear here",
+    "m_copy_hook": "🚀 A scroll-stopping hook line — generated from your manual story.",
+    "m_copy_body": "After clicking Generate, this will hold a 2-3 sentence professional summary of your manual story.",
+    "m_copy_caption": "A short editorial Instagram caption derived from your manual story.",
+    "m_copy_tags": "#YourStory #ContentCreator #SocialMedia #InstaTips #DigitalMarketing #BusinessGrowth #BrandStrategy #Innovation #Marketing #StorytellingMatters #ViralContent #Engagement #InstaReels #CreatorEconomy #Kuberanow"
 }
 
 for key, val in default_memory.items():
@@ -170,36 +206,225 @@ cards_map = [
 ]
 
 # --- 4. HIGH-FIDELITY AUTOMATED CONTENT-AWARE GRAPHICS HOOK ---
-def call_gemini_image_generation(prompt_context):
-    if not st.session_state.get("gemini_api_key"):
-        st.warning("Skipping AI Engine generation. Please provide a Gemini API Key in the sidebar customizer panel.")
+def _pexels_search_image(prompt_context, pexels_key):
+    """
+    Search Pexels for a topic-relevant photo using keyword extraction from the
+    AI-generated descriptive prompt. Returns a direct photo URL or None on failure.
+
+    Pexels works best with short keyword queries (2-5 nouns) rather than long
+    descriptive sentences, so we extract the most meaningful words from the prompt.
+    Returns a RANDOM photo from the top results so repeated regenerations on the
+    same page give variety instead of the same image.
+    """
+    if not pexels_key or not pexels_key.strip():
         return None
-        
-    prompt_lower = str(prompt_context).lower()
-    
-    # Intelligently route to ultra-stable high-res template layers to guarantee instant layout visibility & eliminate CORS blockages
-    if "court" in prompt_lower or "legal" in prompt_lower or "judge" in prompt_lower or "law" in prompt_lower:
-        return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop"
-    elif "stock" in prompt_lower or "finance" in prompt_lower or "market" in prompt_lower or "wall street" in prompt_lower or "trading" in prompt_lower:
-        return "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&auto=format&fit=crop"
-    elif "defense" in prompt_lower or "security" in prompt_lower or "cyber" in prompt_lower or "software" in prompt_lower or "blacklist" in prompt_lower:
-        return "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop"
-    elif "data" in prompt_lower or "network" in prompt_lower or "mesh" in prompt_lower or "cloud" in prompt_lower or "intelligence" in prompt_lower:
-        return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop"
-    elif "analytics" in prompt_lower or "dashboard" in prompt_lower or "graph" in prompt_lower or "chart" in prompt_lower:
-        return "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop"
-    elif "workspace" in prompt_lower or "minimal" in prompt_lower or "office" in prompt_lower or "conclusion" in prompt_lower:
-        return "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&auto=format&fit=crop"
-        
-    # High-Performance secondary generation matrix backup channel
     try:
-        import urllib.parse
-        encoded_prompt = urllib.parse.quote(f"dark minimalistic corporate presentation slide background graphic, {prompt_context}")
-        return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=800&nologo=true"
+        import random
+        # Strip filler words and punctuation to make a clean keyword search
+        stopwords = {
+            "a", "an", "the", "of", "with", "and", "or", "but", "on", "in", "at",
+            "to", "for", "from", "by", "as", "is", "are", "was", "were", "be",
+            "this", "that", "these", "those", "showing", "depicting", "image",
+            "photo", "photograph", "graphic", "scene", "view", "shot", "background",
+            "cinematic", "dramatic", "moody", "vertical", "high", "detail", "detailed",
+            "composition", "lighting", "dark", "minimalistic", "minimalist"
+        }
+        words = [w.strip(".,;:!?\"'()[]") for w in str(prompt_context).split()]
+        keywords = [w for w in words if w and w.lower() not in stopwords]
+        # Take first 4 meaningful words for a clean Pexels search
+        query = " ".join(keywords[:4]) or "abstract dark background"
+
+        headers = {"Authorization": pexels_key.strip()}
+        params = {
+            "query": query,
+            "per_page": 15,                # fetch a bigger pool so regenerate gives variety
+            "orientation": "portrait",     # 4:5 cards are vertical
+        }
+        response = requests.get("https://api.pexels.com/v1/search", headers=headers, params=params, timeout=8)
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        photos = data.get("photos", [])
+        if not photos:
+            return None
+        # Pick RANDOMLY from results so regenerate button shows a new photo each time
+        photo = random.choice(photos)
+        src = photo.get("src", {})
+        return src.get("large") or src.get("medium") or src.get("original")
     except Exception:
+        return None
+
+
+def call_gemini_image_generation(prompt_context):
+    """
+    Generate a background image from the article-derived prompt.
+
+    Strategy (tries each in order):
+    1. Pexels API (if key configured) — real photos, instant, high quality
+    2. pollinations.ai — free AI generation, slower, no key needed
+    3. Neutral Unsplash fallback — always works, prevents blank cards
+
+    Note: Gemini's free API tier does NOT generate images. The function name is
+    kept for backward compatibility but the actual provider is Pexels/pollinations.
+    """
+    if not prompt_context or not str(prompt_context).strip():
         return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop"
 
-# --- 5. LIVE AI-DRIVEN URL EXTRACTION ENGINE ---
+    # Tier 1: Pexels (recommended — fast, high quality, real photos)
+    pexels_key = st.session_state.get("pexels_api_key", "")
+    pexels_url = _pexels_search_image(prompt_context, pexels_key)
+    if pexels_url:
+        return pexels_url
+
+    # Tier 2: pollinations.ai fallback (slow but free, no API key needed)
+    try:
+        import urllib.parse
+        styled_prompt = f"{prompt_context}, cinematic dark moody photograph, dramatic lighting, high detail"
+        encoded_prompt = urllib.parse.quote(styled_prompt)
+        return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=1000&nologo=true&enhance=true"
+    except Exception:
+        # Tier 3: neutral Unsplash fallback so cards never show blank
+        return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop"
+
+# --- 5. LIVE AI-DRIVEN CONTENT EXTRACTION ENGINE ---
+def _run_gemini_orchestration(article_text, target_lang, diag, key_prefix=""):
+    """
+    Reusable Gemini orchestration: takes article text (from any source — URL scrape
+    or manual entry) and populates session_state for all 6 pages + copywriting board.
+    Returns True if at least one key was applied, False otherwise.
+    The diag dict captures diagnostics that the URL pipeline shows in the debug panel.
+
+    key_prefix='' (default) → writes to regular keys p1_title, copy_title, etc. (URL tab)
+    key_prefix='m_'         → writes to m_p1_title, m_copy_title, etc. (Manual Story tab)
+    """
+    diag["ai_called"] = True
+    genai.configure(api_key=st.session_state["gemini_api_key"])
+    model = genai.GenerativeModel('gemini-2.5-flash-lite')
+
+    orchestration_prompt = f"""
+    You are an expert content architect who can analyze ANY topic — entertainment, sports, politics, business, technology, science, lifestyle, crime, health, or any other domain. Read the news article context below carefully, then design a 6-page Instagram carousel that explains the FULL story to readers who haven't read the article.
+
+    ═══════════════════════════════════════════════════════════════════════
+    LANGUAGE RULES — READ CAREFULLY AND OBEY EXACTLY:
+    ═══════════════════════════════════════════════════════════════════════
+    Three language zones in your output — each follows its own rule:
+
+    ZONE 1 — Page Content (P1_TITLE through P6_SUMMARY):
+            Write in: {target_lang}
+            If {target_lang} is "ગુજરાતી", write in Gujarati script (દેવનાગરી).
+            If {target_lang} is "English", write in English.
+
+    ZONE 2 — Image Prompts (P1_PROMPT through P6_PROMPT):
+            ALWAYS write in English regardless of {target_lang}.
+            These prompts feed an image generator (Pexels search) that only
+            understands English keywords. NEVER write image prompts in Gujarati.
+
+    ZONE 3 — Copywriting Suggestion Board (COPY_TITLE, COPY_HOOK, COPY_BODY,
+             COPY_CAPTION, COPY_TAGS):
+            ALWAYS write in English regardless of {target_lang}.
+            These are for global Instagram discovery and hashtag reach.
+            NEVER write the copywriting board in Gujarati, even when the page
+            content is in Gujarati. This is a hard rule with no exceptions.
+
+    EXAMPLE: If target language is Gujarati and the article is about Ranveer Singh:
+      P1_TITLE: રણવીર સિંહ પર FWICE નો પ્રતિબંધ              (Gujarati ✓)
+      P1_SUMMARY: ફિલ્મ ઇન્ડસ્ટ્રીમાં મોટો ઝટકો...              (Gujarati ✓)
+      P1_PROMPT: Bollywood film set with bright stage lights    (English ✓)
+      COPY_TITLE: Ranveer Singh Faces FWICE Ban                 (English ✓)
+      COPY_TAGS: #Bollywood #RanveerSingh #FWICE #Kuberanow     (English ✓)
+    ═══════════════════════════════════════════════════════════════════════
+
+    EXTRACTED NEWS CONTEXT:
+    {article_text}
+
+    CRITICAL CONTENT RULES:
+    1. Every page must contain SPECIFIC, ARTICLE-DERIVED information — actual names, places, numbers, dates, quotes, facts from the article. Do NOT write generic statements like "this is important" or "things are changing". Use the specific people and events from the article.
+    2. Spread the article content across all 6 pages so a reader sees the full story by swiping through.
+    3. Image prompts must match the ARTICLE'S ACTUAL TOPIC. If the article is about a Bollywood actor — describe a film set, stage lights, paparazzi cameras, Mumbai cityscape. If it's about a courtroom case — describe judges, gavels, legal documents. If it's about sports — describe stadiums, athletes, scoreboards. NEVER force "corporate" or "financial" imagery onto unrelated topics.
+    4. Output PLAIN TEXT only. Do NOT use markdown (no **bold**, no ```code blocks
+```, no bullet points). Output exactly the keys shown below, one per line.
+
+    PAGE-BY-PAGE STRUCTURE:
+    P1 = Hook Cover (grabs attention, names the main subject and the big news)
+    P2 = Background/Context (what led up to this — when, where, who)
+    P3 = Key Facts (the most important specific details from the article)
+    P4 = Reactions/Impact (what people are saying, what changes because of this)
+    P5 = What Happens Next (future steps, ongoing developments)
+    P6 = Final Takeaway (the one big conclusion readers should remember)
+
+    REQUIRED OUTPUT FORMAT (one line per key, exactly as shown):
+    P1_TITLE: [Short punchy hook title under 10 words in {target_lang}]
+    P1_SUMMARY: [One full sentence summary in {target_lang} with the central person/event/number]
+    P2_TITLE: [One sentence describing context/background in {target_lang} — specific details]
+    P2_SUMMARY: [One full sentence expanding on background in {target_lang} with specific facts]
+    P3_TITLE: [One sentence stating a key fact in {target_lang} — name, number, date, place]
+    P3_SUMMARY: [One full sentence with more detail on that key fact in {target_lang}]
+    P4_TITLE: [One sentence on reactions or impact in {target_lang}]
+    P4_SUMMARY: [One full sentence expanding on reactions in {target_lang} with specifics]
+    P5_TITLE: [One sentence about what happens next in {target_lang}]
+    P5_SUMMARY: [One full sentence with details on next steps in {target_lang}]
+    P6_TITLE: [One sentence final takeaway in {target_lang}]
+    P6_SUMMARY: [One full sentence wrapping up the story in {target_lang}]
+    P1_PROMPT: [English-only image gen prompt matching the article topic. Bollywood → red carpet, film cameras. Sports → stadium, athletes. Politics → parliament, podium. Tech → server racks. Crime → courtroom, evidence files. Business → stock chart, office tower.]
+    P2_PROMPT: [Different English-only scene representing background/context aspect]
+    P3_PROMPT: [Different English-only scene representing key facts]
+    P4_PROMPT: [Different English-only scene representing reactions/impact]
+    P5_PROMPT: [Different English-only scene representing the future/next steps]
+    P6_PROMPT: [Different English-only scene representing the conclusion]
+    COPY_TITLE: [English-only catchy Instagram post title — NEVER Gujarati]
+    COPY_HOOK: [English-only scroll-stopping hook line — NEVER Gujarati]
+    COPY_BODY: [English-only 2-3 sentence professional summary — NEVER Gujarati]
+    COPY_CAPTION: [English-only short editorial Instagram caption — NEVER Gujarati]
+    COPY_TAGS: [English-only 15 relevant hashtags separated by spaces, mixing topic-specific and broad-reach tags, ending with #Kuberanow — NEVER Gujarati hashtags]
+    """
+
+    ai_response = model.generate_content(orchestration_prompt).text
+    diag["ai_raw_response"] = ai_response[:2000]
+
+    # Robust parser: tolerates markdown bold, code fences, bracketed values, leading dashes
+    cleaned = ai_response.replace("```json", "").replace("```plaintext", "").replace("```text", "").replace("```", "")
+    cleaned = cleaned.replace("**", "").replace("__", "")
+
+    for line in cleaned.split('\n'):
+        line = line.strip()
+        if not line or ':' not in line:
+            continue
+        key_raw, _, value = line.partition(':')
+        key = key_raw.strip().lstrip("-* ").lower()
+        value = value.strip().strip('"').strip("'").strip("[]").strip()
+        if not value or not key:
+            continue
+        diag["ai_keys_parsed"].append(key)
+        # Apply prefix so Manual Story tab writes to m_* keys, URL tab writes to p_* keys
+        actual_key = f"{key_prefix}{key}"
+        if actual_key in st.session_state:
+            st.session_state[actual_key] = value
+            diag["ai_keys_applied"].append(actual_key)
+        else:
+            diag["ai_keys_skipped"].append(actual_key)
+
+    # Generate background images for all 6 pages (respects prefix so each tab's images stay separate)
+    for p_id in ["p1", "p2", "p3", "p4", "p5", "p6"]:
+        prefixed_p_id = f"{key_prefix}{p_id}"
+        generated_url = call_gemini_image_generation(st.session_state[f"{prefixed_p_id}_prompt"])
+        if generated_url:
+            st.session_state[f"{prefixed_p_id}_img"] = generated_url
+
+    return len(diag["ai_keys_applied"]) > 0
+
+
+def _regen_image_cb(target_p_id):
+    """
+    Module-level callback used by every page's '🔄 Regenerate Slide Background Graphic' button.
+    Streamlit binds this with on_click=_regen_image_cb, args=(p_id,) — so the page id is
+    passed explicitly as an argument, not captured via closure. This guarantees that
+    clicking page X's button ONLY updates page X's image, never the other 5 pages.
+    """
+    new_img_data = call_gemini_image_generation(st.session_state.get(f"{target_p_id}_prompt", ""))
+    if new_img_data:
+        st.session_state[f"{target_p_id}_img"] = new_img_data
+
+
 def fetch_and_translate_news(url, target_lang):
     has_api_key = bool(st.session_state.get("gemini_api_key", "").strip())
     scraped_text = ""
@@ -241,91 +466,10 @@ def fetch_and_translate_news(url, target_lang):
 
     if has_api_key and scraped_text:
         try:
-            diag["ai_called"] = True
-            genai.configure(api_key=st.session_state["gemini_api_key"])
-            model = genai.GenerativeModel('gemini-2.5-flash-lite')
-
-            orchestration_prompt = f"""
-            You are an expert content architect who can analyze ANY topic — entertainment, sports, politics, business, technology, science, lifestyle, crime, health, or any other domain. Read the news article context below carefully, then design a 6-page Instagram carousel that explains the FULL story to readers who haven't read the article.
-
-            TARGET OUTPUT LANGUAGE: {target_lang}
-
-            EXTRACTED NEWS CONTEXT:
-            {scraped_text}
-
-            CRITICAL RULES:
-            1. Every page must contain SPECIFIC, ARTICLE-DERIVED information — actual names, places, numbers, dates, quotes, facts from the article. Do NOT write generic statements like "this is important" or "things are changing". Use the specific people and events from the article.
-            2. Spread the article content across all 6 pages so a reader sees the full story by swiping through.
-            3. Image prompts must match the ARTICLE'S ACTUAL TOPIC. If the article is about a Bollywood actor — describe a film set, stage lights, paparazzi cameras, Mumbai cityscape. If it's about a courtroom case — describe judges, gavels, legal documents. If it's about sports — describe stadiums, athletes, scoreboards. NEVER force "corporate" or "financial" imagery onto unrelated topics.
-            4. Output PLAIN TEXT only. Do NOT use markdown (no **bold**, no ```code blocks```, no bullet points). Output exactly the keys shown below, one per line.
-
-            PAGE-BY-PAGE STRUCTURE:
-            P1 = Hook Cover (grabs attention, names the main subject and the big news)
-            P2 = Background/Context (what led up to this — when, where, who)
-            P3 = Key Facts (the most important specific details from the article)
-            P4 = Reactions/Impact (what people are saying, what changes because of this)
-            P5 = What Happens Next (future steps, ongoing developments)
-            P6 = Final Takeaway (the one big conclusion readers should remember)
-
-            REQUIRED OUTPUT FORMAT (one line per key, exactly as shown):
-            P1_TITLE: [Short punchy hook title under 10 words, names the main subject]
-            P1_SUMMARY: [One full sentence summarizing the news, with the central person/event/number]
-            P2_TITLE: [One sentence describing the context/background — specific details, not generic]
-            P2_SUMMARY: [One full sentence expanding on the background with specific facts from the article]
-            P3_TITLE: [One sentence stating a key fact from the article — name, number, date, place]
-            P3_SUMMARY: [One full sentence with more detail on that key fact]
-            P4_TITLE: [One sentence on reactions or impact — quote a person or describe what's changing]
-            P4_SUMMARY: [One full sentence expanding on those reactions with specifics]
-            P5_TITLE: [One sentence about what happens next — upcoming events, next steps, predictions]
-            P5_SUMMARY: [One full sentence with details on the next steps]
-            P6_TITLE: [One sentence final takeaway — the lesson, the warning, the call to action]
-            P6_SUMMARY: [One full sentence wrapping up the story with specific impact]
-            P1_PROMPT: [English image gen prompt that visually matches the ARTICLE TOPIC. Examples by topic — entertainment: red carpet, film cameras, Mumbai night skyline. Sports: stadium lights, athlete silhouette, scoreboard. Politics: parliament building, podium, flags. Technology: server racks, glowing circuits, code on screen. Crime: police lights, courtroom, evidence files. Business: stock chart, office tower, handshake. PICK THE ONE THAT MATCHES THIS ARTICLE.]
-            P2_PROMPT: [Different scene, same topic family — visually representing the background/context aspect]
-            P3_PROMPT: [Different scene, same topic family — visually representing the key facts]
-            P4_PROMPT: [Different scene, same topic family — visually representing reactions/impact]
-            P5_PROMPT: [Different scene, same topic family — visually representing the future/next steps]
-            P6_PROMPT: [Different scene, same topic family — visually representing the conclusion]
-            COPY_TITLE: [Catchy title for an Instagram text post, in English, about this article]
-            COPY_HOOK: [Scroll-stopping hook line in English]
-            COPY_BODY: [2-3 sentence professional summary of the article in English]
-            COPY_CAPTION: [Short editorial Instagram caption in English mentioning the main subject and angle]
-            COPY_TAGS: [15 relevant English hashtags separated by spaces, mixing topic-specific and broad-reach tags, ending with #Kuberanow]
-            """
-
-            ai_response = model.generate_content(orchestration_prompt).text
-            diag["ai_raw_response"] = ai_response[:2000]  # Keep diag size sane
-
-            # --- ROBUST PARSER: handle markdown bold, code fences, and extra whitespace ---
-            cleaned = ai_response.replace("```json", "").replace("```plaintext", "").replace("```text", "").replace("```", "")
-            cleaned = cleaned.replace("**", "").replace("__", "")
-
-            for line in cleaned.split('\n'):
-                line = line.strip()
-                if not line or ':' not in line:
-                    continue
-                key_raw, _, value = line.partition(':')
-                key = key_raw.strip().lstrip("-* ").lower()
-                value = value.strip().strip('"').strip("'").strip("[]").strip()
-                if not value or not key:
-                    continue
-                diag["ai_keys_parsed"].append(key)
-                if key in st.session_state:
-                    st.session_state[key] = value
-                    diag["ai_keys_applied"].append(key)
-                else:
-                    diag["ai_keys_skipped"].append(key)
-
-            for p_id in ["p1", "p2", "p3", "p4", "p5", "p6"]:
-                generated_url = call_gemini_image_generation(st.session_state[f"{p_id}_prompt"])
-                if generated_url:
-                    st.session_state[f"{p_id}_img"] = generated_url
-
-            # Only mark success if at least some keys were applied
-            if not diag["ai_keys_applied"]:
+            success = _run_gemini_orchestration(scraped_text, target_lang, diag)
+            if not success:
                 diag["errors"].append("Gemini response received but ZERO keys were applied — schema mismatch. See raw response below.")
                 diag["fallback_used"] = True
-                # fall through to fallback
             else:
                 return
         except Exception as ai_err:
@@ -333,6 +477,65 @@ def fetch_and_translate_news(url, target_lang):
             st.error(f"Live AI Processing Exception occurred ({ai_err}). Initializing Sandbox Blueprint Layer instead.")
 
     diag["fallback_used"] = True
+
+
+def process_manual_story(headline, body, target_lang):
+    """
+    Process a manually-typed headline + body through the same Gemini orchestration
+    pipeline as the URL scraper, BUT writes to independent m_* session keys so the
+    Manual Story tab's content never touches the URL tab's content (and vice versa).
+
+    target_lang controls the PAGE content language (Gujarati or English, per the
+    sidebar choice). The Copywriting Suggestion Board fields (m_copy_*) are ALWAYS
+    generated in English — enforced inside the orchestration prompt itself.
+
+    Returns (success_bool, message_str).
+    """
+    if not st.session_state.get("gemini_api_key", "").strip():
+        return False, "⚠️ Gemini API key required. Add it in the sidebar (Sandbox Mode disables AI generation)."
+
+    headline = (headline or "").strip()
+    body = (body or "").strip()
+    if not headline and not body:
+        return False, "⚠️ Please enter at least a headline or a body description before generating."
+
+    # Combine the manual inputs into a single article-like text block for Gemini
+    article_text = ""
+    if headline:
+        article_text += f"HEADLINE: {headline}\n\n"
+    if body:
+        article_text += f"FULL STORY:\n{body}"
+
+    # Use a separate diagnostic store for the manual tab so URL tab's debug panel
+    # isn't overwritten when the user is working in Manual Story
+    diag = {
+        "url": "(manual story composition)",
+        "has_api_key": True,
+        "http_status": None,
+        "scraped_chars": len(article_text),
+        "scraped_preview": article_text[:600],
+        "ai_called": False,
+        "ai_raw_response": "",
+        "ai_keys_parsed": [],
+        "ai_keys_applied": [],
+        "ai_keys_skipped": [],
+        "fallback_used": False,
+        "errors": [],
+    }
+    st.session_state["_last_manual_diag"] = diag
+
+    try:
+        # Pass the user's sidebar language choice (NOT forced English) — page content
+        # respects the sidebar toggle. COPY_* fields stay English because the prompt
+        # itself explicitly demands English for them regardless of page language.
+        success = _run_gemini_orchestration(article_text, target_lang, diag, key_prefix="m_")
+        if success:
+            return True, f"✅ Story expanded into 6 pages — {len(diag['ai_keys_applied'])} fields populated and images generated."
+        else:
+            return False, "⚠️ Gemini responded but the format didn't match. Try rewording your story or check the diagnostics panel."
+    except Exception as ai_err:
+        diag["errors"].append(f"Gemini call failed: {ai_err}")
+        return False, f"❌ Gemini call failed: {ai_err}"
 
     # --- SANDBOX COGNITIVE FALLBACK BLOCK ---
     if target_lang == "ગુજરાતી":
@@ -558,8 +761,24 @@ with st.sidebar:
         st.markdown('<div style="background-color: #0d2a22; border: 1px solid #00ffcc; border-radius: 6px; padding: 8px; color: #00ffcc; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 15px;">✅ Gemini API Key Applied</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div style="background-color: #2b1a1a; border: 1px solid #ff4444; border-radius: 6px; padding: 8px; color: #ff4444; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 15px;">⚠️ Running in Sandbox Mode (No Key Detected)</div>', unsafe_allow_html=True)
+
+    # --- PEXELS API KEY for high-quality background images ---
+    # Optional but strongly recommended. Without it, the app falls back to pollinations.ai
+    # which is slower and less reliable. Free Pexels key at: https://www.pexels.com/api/
+    st.session_state["pexels_api_key"] = st.text_input(
+        "📸 Pexels API Key (for better images):",
+        value=st.session_state.get("pexels_api_key", ""),
+        type="password",
+        placeholder="Optional — get free at pexels.com/api",
+        help="Free Pexels API key gives instant, high-quality background photos. Without it, the app uses a slower AI image generator."
+    )
+    if st.session_state["pexels_api_key"].strip():
+        st.markdown('<div style="background-color: #0d2a22; border: 1px solid #00ffcc; border-radius: 6px; padding: 6px; color: #00ffcc; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 15px;">✅ Pexels — instant photos</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="background-color: #2a2515; border: 1px solid #ffaa44; border-radius: 6px; padding: 6px; color: #ffaa44; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 15px;">⚠️ Using slow AI image fallback</div>', unsafe_allow_html=True)
     
-    lang_choice = st.radio("🌐 Workspace Core Language", ["ગુજરાતી", "English"])
+    # ADDED KEY HERE TO MAKE IT GLOBALLY ACCESSIBLE FOR THE FIX
+    lang_choice = st.radio("🌐 Workspace Core Language", ["ગુજરાતી", "English"], key="lang_choice_radio")
     st.markdown("---")
     
     # --- ADVANCED AI ENGINE COPYWRITING TONE CONFIGURATOR ---
@@ -630,7 +849,7 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("📐 Positioning Setup")
     text_padding_bottom = st.slider("Text Container Lift (px)", 10, 220, 65)
-    bg_darkness = st.slider("Background Filter Contrast Dimmer", 0.1, 0.9, 0.55)
+    bg_darkness = st.slider("Background Filter Contrast Dimmer", 0.0, 0.8, 0.4)
 
 # --- 8. AUTOMATED SEQUENTIAL BULK JS DOWNLOAD HUB ---
 if st.session_state.get("bulk_download_active"):
@@ -723,6 +942,43 @@ if st.session_state.get("bulk_download_active"):
         st.session_state["bulk_download_active"] = False
         safe_rerun()
 
+
+# =========================================================================================
+# --- GLOBAL ACTION PROCESSING BLOCK (THE BUG FIX) ---
+# This ensures AI generation updates the session state BEFORE any Tab UI widgets are rendered.
+# It completely eliminates the "st.session_state cannot be modified after widget is instantiated" error.
+# =========================================================================================
+
+if st.session_state.get("trigger_tab1_gen"):
+    with st.spinner("Executing structural scraping routine and injecting linguistic parameters..."):
+        fetch_and_translate_news(st.session_state.get("tab1_url_target", ""), st.session_state.get("lang_choice_radio", "English"))
+        st.session_state["session_generations_count"] += 6
+        st.session_state["trigger_tab1_gen"] = False
+        st.session_state["tab1_gen_success"] = True
+
+if st.session_state.get("trigger_manual_gen"):
+    with st.spinner("🤖 AI-Powered Manual Engine is processing your story..."):
+        success, message = process_manual_story(
+            st.session_state.get("manual_headline_target", ""), 
+            st.session_state.get("manual_body_target", ""), 
+            st.session_state.get("lang_choice_radio", "English")
+        )
+        if success:
+            st.session_state["session_generations_count"] += 6
+        st.session_state["manual_gen_message"] = message
+        st.session_state["trigger_manual_gen"] = False
+        st.session_state["manual_gen_success"] = success
+
+if st.session_state.get("trigger_competitor_gen"):
+    with st.spinner("🕵️‍♂️ Analyzing competitor content discrepancies via Gemini Intelligence Nodes..."):
+        analyze_competitor_delta_engine(st.session_state.get("competitor_url_target", ""), st.session_state.get("lang_choice_radio", "English"))
+        st.session_state["session_generations_count"] += 6
+        st.session_state["trigger_competitor_gen"] = False
+        st.session_state["competitor_gen_success"] = True
+
+# =========================================================================================
+
+
 # --- 9. APP MAIN HEADER ARRANGEMENT ---
 st.title("🚀 Live Automated Multi-Page Social Media Engine")
 st.caption("Scrape URLs, auto-translate parameters smoothly, configure graphics, and build production images instantly.")
@@ -743,19 +999,21 @@ with tab1:
     url_field = st.text_input("Paste target news pipeline link here:", value="https://www.cnbc.com/2026/05/19/anthropic-dod-blacklist-court-opening-arguments.html")
 
     if st.button("⚡ Sync Architecture & Translate Content Elements"):
-        with st.spinner("Executing structural scraping routine and injecting linguistic parameters..."):
-            fetch_and_translate_news(url_field, lang_choice)
-            st.session_state["session_generations_count"] += 6
-            # Mode-aware feedback so users aren't misled in Sandbox Mode
-            if st.session_state.get("gemini_api_key", "").strip():
-                st.success(f"✅ Live AI sync complete — article scraped, content generated, and imagery refreshed for the URL above.")
-            else:
-                st.warning(
-                    "⚠️ **Sandbox Mode active — the URL above was NOT scraped.** "
-                    "The pages below are loaded with demo content. "
-                    "To actually process your URL, paste a free Gemini API key in the sidebar "
-                    "(get one at aistudio.google.com/apikey), then click this button again."
-                )
+        st.session_state["tab1_url_target"] = url_field
+        st.session_state["trigger_tab1_gen"] = True
+        safe_rerun()
+
+    if st.session_state.get("tab1_gen_success"):
+        if st.session_state.get("gemini_api_key", "").strip():
+            st.success(f"✅ Live AI sync complete — article scraped, content generated, and imagery refreshed for the URL above.")
+        else:
+            st.warning(
+                "⚠️ **Sandbox Mode active — the URL above was NOT scraped.** "
+                "The pages below are loaded with demo content. "
+                "To actually process your URL, paste a free Gemini API key in the sidebar "
+                "(get one at aistudio.google.com/apikey), then click this button again."
+            )
+        st.session_state["tab1_gen_success"] = False
 
     # ---------------- DIAGNOSTIC PANEL ----------------
     # Shows exactly what happened during the last sync — scraped text, AI response,
@@ -876,12 +1134,21 @@ with tab1:
                 
                 st.text_input("🎯 Modify Gemini Image Gen Prompt:", key=f"{p_id}_prompt")
                 
-                if st.button(f"🔄 Regenerate Slide Background Graphic ({p_id.upper()})"):
-                    with st.spinner("Connecting to Gemini Imagen Systems..."):
-                        new_img_data = call_gemini_image_generation(st.session_state[f"{p_id}_prompt"])
-                        if new_img_data:
-                            st.session_state[f"{p_id}_img"] = new_img_data
-                            safe_rerun()
+                # NOTE: Uses on_click callback (not inline if-block) because Streamlit forbids
+                # modifying st.session_state[f"{p_id}_img"] AFTER the text_input widget above
+                # has been instantiated in the same run. Callbacks run BEFORE the script reruns,
+                # so the new image value lands in session_state before the widget re-reads it.
+                # _regen_image_cb is defined at module level below — args=(p_id,) tells it which page.
+
+                # Use Streamlit's official `args=` pattern for the callback so the
+                # target page id is passed explicitly. This is foolproof against
+                # closure issues — only the clicked page's image is updated.
+                st.button(
+                    f"🔄 Regenerate Slide Background Graphic ({p_id.upper()})",
+                    key=f"regen_btn_{p_id}",
+                    on_click=_regen_image_cb,
+                    args=(p_id,),
+                )
                 
                 render_isolated_card(
                     card_id=p_id,
@@ -939,8 +1206,174 @@ with tab2:
                 st.error(f"Ingestion System Warning: File layout structural error ({parsing_matrix_err})")
                 
     st.markdown("---")
-    manual_headline = st.text_input("Enter custom storyline target headline framework:")
-    manual_body = st.text_area("Enter core body description script:")
+    st.subheader("🤖 AI-Powered Manual Story Engine")
+    st.caption("Write your story below — Gemini will split it into a 6-page carousel, generate background images, and populate the copywriting board automatically, just like URL scraping.")
+
+    manual_headline = st.text_input("Enter custom storyline target headline framework:", key="manual_headline_input")
+    manual_body = st.text_area(
+        "Enter core body description script:",
+        key="manual_body_input",
+        height=180,
+        placeholder="Example:\nGujarat farmers staged a protest yesterday in Ahmedabad over rising diesel prices. The protest, led by the Bharatiya Kisan Sangh, demanded immediate government subsidies. Diesel prices have risen 30% in the last six months due to the Gulf conflict. The Chief Minister has promised to address the issue in the upcoming assembly session.\n\n(Write a few sentences — Gemini will expand into a 6-page carousel)"
+    )
+
+    if st.button("🤖 Generate 6-Page Carousel from Manual Story", key="manual_story_generate_btn"):
+        st.session_state["manual_headline_target"] = manual_headline
+        st.session_state["manual_body_target"] = manual_body
+        st.session_state["trigger_manual_gen"] = True
+        safe_rerun()
+
+    if st.session_state.get("manual_gen_success") is not None:
+        if st.session_state.get("manual_gen_success"):
+            st.success(st.session_state.get("manual_gen_message", "✅ Success!"))
+            st.info("👇 Your 6 pages are below — **fully editable here, independent from the URL tab**. Edits in this tab never affect the URL tab and vice versa.")
+        else:
+            st.warning(st.session_state.get("manual_gen_message", "⚠️ Failed."))
+        # Reset the flag so the message doesn't persist on next interactions
+        st.session_state["manual_gen_success"] = None
+
+    # ================================================================================
+    # MANUAL STORY TAB — FULL INDEPENDENT MULTI-PAGE CANVAS WORKSPACE
+    # Uses m_* prefixed session_state keys throughout, so edits here NEVER touch
+    # the URL tab's state. Edit text, swap images, regenerate, all in English.
+    # ================================================================================
+    st.markdown("---")
+    st.header("🖼️ Multi-Page Live Visual Canvas Workspace (Manual)")
+    st.caption("Edit each page below. All content here is independent from the Process External URL tab. Live preview renders in English.")
+
+    m_col1, m_col2 = st.columns(2)
+
+    for index, (p_id, title_label, has_summary) in enumerate(cards_map):
+        m_id = f"m_{p_id}"  # widget key prefix — keeps Manual tab state separate
+        active_col = m_col1 if index % 2 == 0 else m_col2
+        with active_col:
+            with st.container(border=True):
+                st.write(f"### {title_label}")
+
+                st.text_input("Modify Heading Text Layer:", key=f"{m_id}_title")
+                if has_summary:
+                    st.text_area("Modify Paragraph Subtext:", key=f"{m_id}_summary")
+
+                m_img_src_col, m_manual_upload_col = st.columns([2, 1])
+                # Process the file_uploader column FIRST so we can update session_state
+                # for the image key BEFORE the text_input widget (same key) is instantiated.
+                with m_manual_upload_col:
+                    from PIL import Image
+                    m_uploaded_file = st.file_uploader(
+                        f"📤 Custom Image File ({m_id.upper()})",
+                        type=["png", "jpg", "jpeg"],
+                        key=f"manual_img_upload_{m_id}"
+                    )
+                    if m_uploaded_file:
+                        m_last_processed_key = f"_last_processed_{m_id}"
+                        m_current_file_signature = f"{m_uploaded_file.name}_{m_uploaded_file.size}"
+                        if st.session_state.get(m_last_processed_key) != m_current_file_signature:
+                            try:
+                                m_uploaded_file.seek(0)
+                                m_file_bytes = m_uploaded_file.read()
+                                if m_file_bytes:
+                                    m_pil_image = Image.open(io.BytesIO(m_file_bytes))
+                                    m_pil_image.thumbnail((600, 600))
+                                    m_clean_bg = Image.new("RGB", m_pil_image.size, (2, 6, 18))
+                                    if m_pil_image.mode in ("RGBA", "LA") or (m_pil_image.mode == "P" and "transparency" in m_pil_image.info):
+                                        m_rgba_img = m_pil_image.convert("RGBA")
+                                        m_clean_bg.paste(m_rgba_img, (0, 0), mask=m_rgba_img.getchannel('A'))
+                                        m_pil_image = m_clean_bg
+                                    else:
+                                        m_pil_image = m_pil_image.convert("RGB")
+                                    m_compress_buffer = io.BytesIO()
+                                    m_pil_image.save(m_compress_buffer, format="JPEG", quality=75)
+                                    m_optimized_bytes = m_compress_buffer.getvalue()
+                                    m_encoded_base64 = base64.b64encode(m_optimized_bytes).decode()
+                                    st.session_state[f"{m_id}_img"] = f"data:image/jpeg;base64,{m_encoded_base64}"
+                                    st.session_state[m_last_processed_key] = m_current_file_signature
+                            except Exception as m_img_err:
+                                st.error(f"Image scaling failed: {m_img_err}")
+                        else:
+                            st.caption(f"✅ Loaded: {m_uploaded_file.name}")
+
+                # Now safe to create text_input that uses key=f"{m_id}_img"
+                with m_img_src_col:
+                    st.text_input("🔗 Asset Source Link (URL or Base64 Image string):", key=f"{m_id}_img")
+
+                st.text_input("🎯 Modify Gemini Image Gen Prompt:", key=f"{m_id}_prompt")
+
+                # Same module-level callback _regen_image_cb works for both tabs —
+                # we just pass m_p1 / m_p2 / ... so it updates the right state slot.
+                st.button(
+                    f"🔄 Regenerate Slide Background Graphic ({m_id.upper()})",
+                    key=f"regen_btn_{m_id}",
+                    on_click=_regen_image_cb,
+                    args=(m_id,),
+                )
+
+                render_isolated_card(
+                    card_id=m_id,
+                    title_text=st.session_state[f"{m_id}_title"],
+                    sub_text=st.session_state.get(f"{m_id}_summary", ""),
+                    bg_url=st.session_state[f"{m_id}_img"],
+                    brand_text=company_handle,
+                    logo_url=company_logo,
+                    font_family=font_option, font_size=font_size,
+                    title_color=title_color, sub_color=sub_color, padding_bottom=text_padding_bottom,
+                    bg_darkness=bg_darkness, brand_y=brand_y_pos, brand_color=brand_color,
+                    swipe_text=swipe_label_text,
+                    show_swipe=(p_id in swipe_target_pages),
+                    aspect_ratio=canvas_aspect_ratio_option
+                )
+
+    # ================================================================================
+    # MANUAL STORY TAB — INDEPENDENT COPYWRITING SUGGESTION BOARD
+    # Mirrors the main copywriting board but uses m_copy_* keys so the Manual Story
+    # tab's Instagram caption, hashtags, etc. are separate from the URL tab's.
+    # ================================================================================
+    st.markdown("---")
+    st.header("💡 Live AI Copywriting Suggestion Board (Manual)")
+    st.caption("Independent copywriting board for your manual story. Always in English.")
+
+    m_s_col1, m_s_col2 = st.columns(2)
+    with m_s_col1:
+        st.text_input("Suggested Alternative Title:", key="m_copy_title")
+        st.text_area("Scroll-Stopping Hook Copy Line:", key="m_copy_hook")
+        st.text_area("Primary Main Body Text Copy Asset:", key="m_copy_body")
+    with m_s_col2:
+        st.text_area("Instagram Primary Post Caption:", key="m_copy_caption")
+        st.text_area("Target High-Performance Hashtags:", key="m_copy_tags")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Separate Excel export button for Manual tab — packages m_* content into a download
+    if st.button("📦 Compile Manual Story Content & Build Excel Package", key="manual_compile_excel_btn"):
+        m_rows = [
+            {"Component": "Slide 1 Heading", "Text Data": st.session_state.m_p1_title},
+            {"Component": "Slide 1 Paragraph", "Text Data": st.session_state.m_p1_summary},
+            {"Component": "Slide 2 Heading", "Text Data": st.session_state.m_p2_title},
+            {"Component": "Slide 2 Paragraph", "Text Data": st.session_state.m_p2_summary},
+            {"Component": "Slide 3 Heading", "Text Data": st.session_state.m_p3_title},
+            {"Component": "Slide 3 Paragraph", "Text Data": st.session_state.m_p3_summary},
+            {"Component": "Slide 4 Heading", "Text Data": st.session_state.m_p4_title},
+            {"Component": "Slide 4 Paragraph", "Text Data": st.session_state.m_p4_summary},
+            {"Component": "Slide 5 Heading", "Text Data": st.session_state.m_p5_title},
+            {"Component": "Slide 5 Paragraph", "Text Data": st.session_state.m_p5_summary},
+            {"Component": "Slide 6 Heading", "Text Data": st.session_state.m_p6_title},
+            {"Component": "Slide 6 Paragraph", "Text Data": st.session_state.m_p6_summary},
+            {"Component": "Suggested Title", "Text Data": st.session_state.m_copy_title},
+            {"Component": "Hook Line", "Text Data": st.session_state.m_copy_hook},
+            {"Component": "Body Copy", "Text Data": st.session_state.m_copy_body},
+            {"Component": "Instagram Caption", "Text Data": st.session_state.m_copy_caption},
+            {"Component": "Hashtags", "Text Data": st.session_state.m_copy_tags},
+        ]
+        m_df = pd.DataFrame(m_rows)
+        m_buffer = io.BytesIO()
+        with pd.ExcelWriter(m_buffer, engine='openpyxl') as writer:
+            m_df.to_excel(writer, index=False, sheet_name='ManualStoryCampaign')
+        st.download_button(
+            "📥 Download Manual Story Excel Package",
+            data=m_buffer.getvalue(),
+            file_name="manual_story_carousel_package.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="manual_excel_download_btn"
+        )
 
 # ==================== TAB 3: COMPETITOR INTEL MATRIX ====================
 with tab3:
@@ -954,11 +1387,13 @@ with tab3:
     )
     
     if st.button("⚡ Extract Competitor Content Delta & Craft Counter-Narrative Layout"):
-        with st.spinner("Analyzing competitor content discrepancies via Gemini Intelligence Nodes..."):
-            analyze_competitor_delta_engine(competitor_url_field, lang_choice)
-            st.session_state["session_generations_count"] += 6
-            st.success("Counter-narrative architecture safely structured into main canvas engine viewports!")
-            safe_rerun()
+        st.session_state["competitor_url_target"] = competitor_url_field
+        st.session_state["trigger_competitor_gen"] = True
+        safe_rerun()
+        
+    if st.session_state.get("competitor_gen_success"):
+        st.success("Counter-narrative architecture safely structured into main canvas engine viewports!")
+        st.session_state["competitor_gen_success"] = False
 
 # ==================== TAB 4: PREVIEW FEED CAROUSEL HUB ====================
 with tab4:
